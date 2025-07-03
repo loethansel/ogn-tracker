@@ -742,7 +742,7 @@ static void GPS_UBX(void)                                                       
       GPS_Firmware[ExtLen++]=':';
       strcpy(GPS_Firmware+ExtLen, (const char *)UBX.Byte+Idx);
       ExtLen+=Len; }
-#ifdef WITH_POGNS      
+#ifdef WITH_SERIALOUT_MSGS      
     if(xSemaphoreTake(CONS_Mutex, 10))
     { Format_String(CONS_UART_Write, "MON-VER [");
       Format_UnsDec(CONS_UART_Write, UBX.Bytes);

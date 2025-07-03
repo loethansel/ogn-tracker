@@ -530,7 +530,7 @@ void setup()
   Serial.begin(Parameters.CONbaud);          // USB Console: baud rate probably does not matter here
   GPS_UART_Init();
 
-#ifdef WITH_POGNS
+#ifdef WITH_SERIALOUT_MSGS
   Serial.printf("OGN-Tracker: Hard:%s Soft:%s\n", Parameters.Hard, Parameters.Soft);
 #ifdef BOARD_HAS_PSRAM
   if(psramFound()) Serial.printf("PSRAM:%d/%dkB ", ESP.getFreePsram()>>10, ESP.getPsramSize()>>10);
@@ -590,7 +590,7 @@ void setup()
 #endif
   { 
     HardwareStatus.AXP192=1; 
-#ifdef WITH_POGNS    
+#ifdef WITH_SERIALOUT_MSGS    
     Serial.println("Power/charge chip AXP192 detected"); 
 #endif    
   }
@@ -601,13 +601,13 @@ void setup()
 #endif
   { 
     HardwareStatus.AXP202=1; 
-#ifdef WITH_POGNS    
+#ifdef WITH_SERIALOUT_MSGS    
     Serial.println("Power/charge chip AX202 detected"); 
 #endif    
   }
   else
   { 
-#ifdef WITH_POGNS    
+#ifdef WITH_SERIALOUT_MSGS    
     Serial.println("AXP power/charge chip NOT detected"); 
 #endif    
   }
@@ -618,7 +618,7 @@ void setup()
                    AXP202_BATT_CUR_ADC1 |
                    AXP202_BATT_VOL_ADC1,
                    true);
-#ifdef WITH_POGNS
+#ifdef WITH_SERIALOUT_MSGS
     Serial.printf("  USB:  %5.3fV  %5.3fA\n",
               0.001f*AXP.getVbusVoltage(), 0.001f*AXP.getVbusCurrent());
     Serial.printf("  Batt: %5.3fV (%5.3f-%5.3f)A\n",
@@ -637,13 +637,13 @@ void setup()
     if(PMU->init())
     { 
       HardwareStatus.AXP210=1; 
-#ifdef WITH_POGNS      
+#ifdef WITH_SERIALOUT_MSGS      
       Serial.println("Power/charge chip AXP2101 detected"); 
 #endif      
     }
     else
     { delete PMU; PMU=0; 
-#ifdef WITH_POGNS      
+#ifdef WITH_SERIALOUT_MSGS      
       Serial.println("Power/charge chip AXP2101 NOT detected"); 
 #endif      
     }
@@ -698,7 +698,7 @@ void setup()
     PMU->setChargingLedMode(XPOWERS_CHG_LED_BLINK_1HZ); }
   if(HardwareStatus.AXP192 || HardwareStatus.AXP210)
   { 
-#ifdef WITH_POGNS    
+#ifdef WITH_SERIALOUT_MSGS    
     Serial.printf("  USB:  %5.3fV\n", 0.001f*PMU->getVbusVoltage());
     Serial.printf("  Batt: %5.3fV %d%%\n", 0.001f*PMU->getBattVoltage(), PMU->getBatteryPercent());
     // Serial.printf("  USB:  %5.3fV  %5.3fA\n",
@@ -792,7 +792,7 @@ void setup()
   uint8_t Len=Format_String(Line, "$POGNS,SysStart");
   Len+=NMEA_AppendCheckCRNL(Line, Len);
   Line[Len]=0;
-#ifdef WITH_POGNS  
+#ifdef WITH_SERIALOUT_MSGS  
   xSemaphoreTake(CONS_Mutex, portMAX_DELAY);
   Format_String(CONS_UART_Write, Line);
   xSemaphoreGive(CONS_Mutex);
@@ -852,7 +852,7 @@ static UBX_RxMsg  UBX;
 
 static void PrintParameters(void)                              // print parameters stored in Flash
 { 
-#ifdef WITH_POGNS  
+#ifdef WITH_SERIALOUT_MSGS  
   Parameters.Print(Line);
   xSemaphoreTake(CONS_Mutex, portMAX_DELAY);                   // ask exclusivity on UART1
   Format_String(CONS_UART_Write, Line);
@@ -862,7 +862,7 @@ static void PrintParameters(void)                              // print paramete
 
 static void PrintPOGNS(void)                                   // print parameters in the $POGNS form
 { 
-#ifdef WITH_POGNS  
+#ifdef WITH_SERIALOUT_MSGS  
   xSemaphoreTake(CONS_Mutex, portMAX_DELAY);
   Parameters.WritePOGNS(Line);
   Format_String(CONS_UART_Write, Line);

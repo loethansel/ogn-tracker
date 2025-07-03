@@ -732,7 +732,7 @@ void Radio_Task(void *Parms)
   char Line[120];
 
   int Len=sprintf(Line, "RF chip %s%s detected", RF_ChipType, HardwareStatus.Radio?"":" NOT");
-#ifdef WITH_POGNS
+#ifdef WITH_SERIALOUT_MSGS
   if(xSemaphoreTake(CONS_Mutex, 20))
   { Serial.println(Line);
     xSemaphoreGive(CONS_Mutex); }
