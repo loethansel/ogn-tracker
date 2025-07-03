@@ -671,6 +671,13 @@ static void GPS_NMEA(bool Correct=1)                                        // w
   // Count++; if(Count>=5) { Count=0; RatePass=1; }
   // if( NMEA.isP() || NMEA.isGxRMC() || NMEA.isGxGGA() || NMEA.isGxGSA() || NMEA.isGxGSV() || NMEA.isGPTXT()) )
   // if( NMEA.isP() || NMEA.isBD() || NMEA.isGx() )
+  // RAPA
+  if(NMEA.isGxRMC()) 
+    { if(xSemaphoreTake(CONS_Mutex, 10))
+      { Format_String(CONS_UART_Write, (const char *)NMEA.Data, 0, NMEA.Len);
+        CONS_UART_Write('\r'); CONS_UART_Write('\n');
+        xSemaphoreGive(CONS_Mutex); }
+    }
   // we would need to patch the GGA here for the GPS which does not calc. nor correct for GeoidSepar
 #endif
   {
@@ -735,6 +742,7 @@ static void GPS_UBX(void)                                                       
       GPS_Firmware[ExtLen++]=':';
       strcpy(GPS_Firmware+ExtLen, (const char *)UBX.Byte+Idx);
       ExtLen+=Len; }
+#ifdef WITH_POGNS      
     if(xSemaphoreTake(CONS_Mutex, 10))
     { Format_String(CONS_UART_Write, "MON-VER [");
       Format_UnsDec(CONS_UART_Write, UBX.Bytes);
@@ -744,6 +752,7 @@ static void GPS_UBX(void)                                                       
       Format_String(CONS_UART_Write, GPS_Firmware);
       CONS_UART_Write('\n');
       xSemaphoreGive(CONS_Mutex); }
+#endif      
   }
 #ifdef WITH_GPS_CONFIG
   if(UBX.isCFG_PRT())                                                             // if port configuration
@@ -1030,10 +1039,12 @@ void vTaskGPS(void* pvParameters)
 
   vTaskDelay(5);                                                         // put some initial delay for lighter startup load
 
+#ifdef WITH_PONGS  
   xSemaphoreTake(CONS_Mutex, portMAX_DELAY);
   Format_String(CONS_UART_Write, "TaskGPS:");
   Format_String(CONS_UART_Write, "\n");
   xSemaphoreGive(CONS_Mutex);
+#endif
 
   GPS_Burst.Flags=0;
   bool PPS=0;
@@ -1143,11 +1154,13 @@ void vTaskGPS(void* pvParameters)
         GPS_UART_Write('\n');
 #endif
       }
+#ifdef WITH_PONGS      
       if(xSemaphoreTake(CONS_Mutex, 10))
       { Format_String(CONS_UART_Write, "TaskGPS: ");
         Format_UnsDec(CONS_UART_Write, NewBaudRate);
         Format_String(CONS_UART_Write, "bps\n");
         xSemaphoreGive(CONS_Mutex); }
+#endif        
       GPS_UART_SetBaudrate(NewBaudRate);
       NoValidData=0;
     }

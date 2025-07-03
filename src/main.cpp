@@ -530,12 +530,13 @@ void setup()
   Serial.begin(Parameters.CONbaud);          // USB Console: baud rate probably does not matter here
   GPS_UART_Init();
 
+#ifdef WITH_POGNS
   Serial.printf("OGN-Tracker: Hard:%s Soft:%s\n", Parameters.Hard, Parameters.Soft);
-
 #ifdef BOARD_HAS_PSRAM
   if(psramFound()) Serial.printf("PSRAM:%d/%dkB ", ESP.getFreePsram()>>10, ESP.getPsramSize()>>10);
 #endif
   Serial.printf("Heap:%d/%dkB CPU:%dMHz\n", ESP.getFreeHeap()>>10, ESP.getHeapSize()>>10, getCpuFrequencyMhz());
+#endif
 
 #ifdef WITH_ST7735
   TFT_Init();
@@ -587,15 +588,29 @@ void setup()
 #else
   if(AXP.begin(Wire, AXP192_SLAVE_ADDRESS)!=AXP_FAIL)
 #endif
-  { HardwareStatus.AXP192=1; Serial.println("Power/charge chip AXP192 detected"); }
+  { 
+    HardwareStatus.AXP192=1; 
+#ifdef WITH_POGNS    
+    Serial.println("Power/charge chip AXP192 detected"); 
+#endif    
+  }
 #ifdef PMU_I2C_PinSCL
   else if(AXP.begin(PMU_I2C, AXP202_SLAVE_ADDRESS)!=AXP_FAIL)
 #else
   else if(AXP.begin(Wire, AXP202_SLAVE_ADDRESS)!=AXP_FAIL)
 #endif
-  { HardwareStatus.AXP202=1; Serial.println("Power/charge chip AX202 detected"); }
+  { 
+    HardwareStatus.AXP202=1; 
+#ifdef WITH_POGNS    
+    Serial.println("Power/charge chip AX202 detected"); 
+#endif    
+  }
   else
-  { Serial.println("AXP power/charge chip NOT detected"); }
+  { 
+#ifdef WITH_POGNS    
+    Serial.println("AXP power/charge chip NOT detected"); 
+#endif    
+  }
 
   if(HardwareStatus.AXP192 || HardwareStatus.AXP202)
   { AXP.adc1Enable(AXP202_VBUS_VOL_ADC1 |
@@ -603,10 +618,12 @@ void setup()
                    AXP202_BATT_CUR_ADC1 |
                    AXP202_BATT_VOL_ADC1,
                    true);
+#ifdef WITH_POGNS
     Serial.printf("  USB:  %5.3fV  %5.3fA\n",
               0.001f*AXP.getVbusVoltage(), 0.001f*AXP.getVbusCurrent());
     Serial.printf("  Batt: %5.3fV (%5.3f-%5.3f)A\n",
               0.001f*AXP.getBattVoltage(), 0.001f*AXP.getBattChargeCurrent(), 0.001f*AXP.getBattDischargeCurrent());
+#endif              
   }
 #endif
 #ifdef WITH_XPOWERS
@@ -618,9 +635,18 @@ void setup()
     PMU = new XPowersAXP2101(Wire);
 #endif
     if(PMU->init())
-    { HardwareStatus.AXP210=1; Serial.println("Power/charge chip AXP2101 detected"); }
+    { 
+      HardwareStatus.AXP210=1; 
+#ifdef WITH_POGNS      
+      Serial.println("Power/charge chip AXP2101 detected"); 
+#endif      
+    }
     else
-    { delete PMU; PMU=0; Serial.println("Power/charge chip AXP2101 NOT detected"); }
+    { delete PMU; PMU=0; 
+#ifdef WITH_POGNS      
+      Serial.println("Power/charge chip AXP2101 NOT detected"); 
+#endif      
+    }
   }
   if(PMU==0)
   {
@@ -671,12 +697,15 @@ void setup()
     // set charging LED flashing
     PMU->setChargingLedMode(XPOWERS_CHG_LED_BLINK_1HZ); }
   if(HardwareStatus.AXP192 || HardwareStatus.AXP210)
-  { Serial.printf("  USB:  %5.3fV\n", 0.001f*PMU->getVbusVoltage());
+  { 
+#ifdef WITH_POGNS    
+    Serial.printf("  USB:  %5.3fV\n", 0.001f*PMU->getVbusVoltage());
     Serial.printf("  Batt: %5.3fV %d%%\n", 0.001f*PMU->getBattVoltage(), PMU->getBatteryPercent());
     // Serial.printf("  USB:  %5.3fV  %5.3fA\n",
     //           0.001f*PMU->getVbusVoltage(), 0.001f*PMU->getVbusCurrent());
     // Serial.printf("  Batt: %5.3fV (%5.3f-%5.3f)A\n",
     //           0.001f*PMU->getBattVoltage(), 0.001f*PMU->getBattChargeCurrent(), 0.001f*PMU->getBattDischargeCurrent());
+#endif    
   }
 #endif
   if(!HardwareStatus.AXP192 && !HardwareStatus.AXP202 && !HardwareStatus.AXP210)  // if none of the power controllers detected
@@ -763,11 +792,12 @@ void setup()
   uint8_t Len=Format_String(Line, "$POGNS,SysStart");
   Len+=NMEA_AppendCheckCRNL(Line, Len);
   Line[Len]=0;
+#ifdef WITH_POGNS  
   xSemaphoreTake(CONS_Mutex, portMAX_DELAY);
   Format_String(CONS_UART_Write, Line);
   xSemaphoreGive(CONS_Mutex);
+#endif  
   PrintPOGNS();
-
 #ifdef WITH_LOG
   xTaskCreate(vTaskLOG    ,  "LOG"  ,  5000, NULL, 0, NULL);  // log data to flash
 #endif
@@ -821,14 +851,19 @@ static UBX_RxMsg  UBX;
 #endif
 
 static void PrintParameters(void)                              // print parameters stored in Flash
-{ Parameters.Print(Line);
+{ 
+#ifdef WITH_POGNS  
+  Parameters.Print(Line);
   xSemaphoreTake(CONS_Mutex, portMAX_DELAY);                   // ask exclusivity on UART1
   Format_String(CONS_UART_Write, Line);
   xSemaphoreGive(CONS_Mutex);                                  // give back UART1 to other tasks
+#endif
 }
 
 static void PrintPOGNS(void)                                   // print parameters in the $POGNS form
-{ xSemaphoreTake(CONS_Mutex, portMAX_DELAY);
+{ 
+#ifdef WITH_POGNS  
+  xSemaphoreTake(CONS_Mutex, portMAX_DELAY);
   Parameters.WritePOGNS(Line);
   Format_String(CONS_UART_Write, Line);
   Parameters.WritePOGNS_Pilot(Line);
@@ -846,16 +881,18 @@ static void PrintPOGNS(void)                                   // print paramete
   Format_String(CONS_UART_Write, Line);
 #endif
   xSemaphoreGive(CONS_Mutex);                                          //
-  return; }
+#endif 
+  return;
+}
 
 #ifdef WITH_CONFIG
 static void ReadParameters(void)  // read parameters requested by the user in the NMEA sent.
 { if((!NMEA.hasCheck()) || NMEA.isChecked() )
   { PrintParameters();
-    if(NMEA.Parms==0) { PrintPOGNS(); return; }                              // if no parameter given
+    if(NMEA.Parms==0) { PrintPOGNS(); return; }  // if no parameter given
     Parameters.ReadPOGNS(NMEA);
     PrintParameters();
-    esp_err_t Err = Parameters.WriteToNVS();                                                  // erase and write the parameters into the Flash
+    esp_err_t Err = Parameters.WriteToNVS();     // erase and write the parameters into the Flash
   }
 }
 #endif
@@ -939,10 +976,25 @@ static void ProcessCtrlF(void)                                  // list log file
     Format_String(CONS_UART_Write, "kB used, ");
     Format_UnsDec(CONS_UART_Write, Total/1024);
     Format_String(CONS_UART_Write, "kB total, "); }
-  Format_UnsDec(CONS_UART_Write, Files);
-  Format_String(CONS_UART_Write, " files\n");
+    Format_UnsDec(CONS_UART_Write, Files);
+    Format_String(CONS_UART_Write, " files\n");
 #endif
   xSemaphoreGive(CONS_Mutex); }
+
+// RAPA
+static void ProcessCtrlS(void)
+{  
+   nvs_flash_erase();
+   esp_core_dump_image_erase();
+   // set default parameter values
+   Parameters.setDefault(getUniqueAddress());
+   // write to nvs
+   Parameters.WriteToNVS();
+   // usage
+   Format_String(CONS_UART_Write, "default Params written to flash memory!\n");
+   Parameters.Verbose=0;
+}
+// END RAPA
 
 static void ProcessCtrlC(void)                                  // print system state to the console
 { xSemaphoreTake(CONS_Mutex, portMAX_DELAY);
@@ -1005,6 +1057,7 @@ static int ProcessInput(void)
 {
   const uint8_t CtrlB = 'B'-'@';
   const uint8_t CtrlC = 'C'-'@';
+  const uint8_t CtrlS = 'S'-'@';
   const uint8_t CtrlF = 'F'-'@';
   const uint8_t CtrlL = 'L'-'@';
   const uint8_t CtrlO = 'O'-'@';
@@ -1015,6 +1068,7 @@ static int ProcessInput(void)
   { uint8_t Byte; int Err=CONS_UART_Read(Byte); if(Err<=0) break; // get byte from console, if none: exit the loop
     Count++;
 #ifndef WITH_GPS_UBX_PASS                                          // when transparency to the GPS not requested
+    if(Byte==CtrlS) ProcessCtrlS();                                // if Ctrl-S received: save parameters
     if(Byte==CtrlC) ProcessCtrlC();                                // if Ctrl-C received: print parameters
     if(Byte==CtrlF) ProcessCtrlF();                                // if Ctrl-F received: list files
     if(Byte==CtrlL) ProcessCtrlL();                                // if Ctrl-L received: list log files

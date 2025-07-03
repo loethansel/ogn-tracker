@@ -21,6 +21,7 @@
 
 #include "nmea.h"
 #include "format.h"
+#include "config.h"
 
 // Parameters stored in Flash
 class FlashParameters
@@ -302,7 +303,7 @@ uint16_t StratuxPort;
     GNSS           =      0x67; // enable GPS, SBAS, GLONASS and GALILEO, but not BeiDou
     GeoidSepar     =    10*DEFAULT_GeoidSepar; // [0.1m]
 
-    Verbose        =         1;
+    Verbose        =         0;
 
     RFchipTempCorr =         0; // [degC]
     CONbaud        =    DEFAULT_CONbaud; // [bps]
@@ -318,6 +319,24 @@ uint16_t StratuxPort;
     InitialPage    =       0;
     for(uint8_t Idx=0; Idx<InfoParmNum; Idx++)
       InfoParmValue(Idx)[0] = 0;
+#ifdef FSB_DEFAULTS
+    // RAPA set default params
+    // wenn ICAO, dann Acft aus der configdatei
+    if(x_adrt == 0x01) AcftID   = x_id;
+    AddrType = x_adrt;
+    AcftType = x_acft;
+    Verbose  = x_verb;
+    NavRate  = x_rate;
+    memcpy(Pilot,x_pilot,sizeof(x_pilot)); // Pilot name
+    memcpy(Manuf,x_manuf,sizeof(x_manuf)); // Manufacturer
+    memcpy(Model,x_model,sizeof(x_model)); // Model
+    memcpy(Type, x_type,sizeof(x_type));   // Type
+    memcpy(SN,   x_sn,sizeof(x_sn));       // Serial Number
+    memcpy(Reg,  x_reg,sizeof(x_reg));     // Registration
+    memcpy(Base, x_base,sizeof(x_base));   // Base airfield
+    // END RAPA
+#endif
+
 #ifdef WITH_LORAWAN
     clrAppKey();
     clrAppSesKey();
@@ -570,7 +589,7 @@ uint16_t StratuxPort;
     Line[Len]=0;
     return Len; }
 
-  uint8_t WritePOGNS(char *Line)
+uint8_t WritePOGNS(char *Line)
   { uint8_t Len=0;
     Len+=Format_String(Line+Len, "$POGNS,CPU=0x");
     uint64_t CPU=getUniqueID();
