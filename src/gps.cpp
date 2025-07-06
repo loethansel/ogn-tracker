@@ -19,7 +19,7 @@
 
 #include "lowpass2.h"
 
-// #define DEBUG_PRINT
+//#define DEBUG_PRINT
 
 // #ifdef DEBUG_PRINT
 static char Line[128];
@@ -234,7 +234,7 @@ static void GPS_BurstStart(int CharDelay=0)  // when GPS starts sending the data
   Format_UnsDec(CONS_UART_Write, TimeSync_Time(Burst_Tick)%60, 2);
   CONS_UART_Write('.');
   Format_UnsDec(CONS_UART_Write, TimeSync_msTime(Burst_Tick), 3);
-  Format_String(CONS_UART_Write, " -> GPS_BurstStart   () GPS:");
+  Format_String(CONS_UART_Write, " -> GPS_BurstStart () GPS:");
   Format_Hex(CONS_UART_Write, GPS_Status.Flags);
   Format_String(CONS_UART_Write, "\n");
   xSemaphoreGive(CONS_Mutex);
@@ -1039,7 +1039,7 @@ void vTaskGPS(void* pvParameters)
 
   vTaskDelay(5);                                                         // put some initial delay for lighter startup load
 
-#ifdef WITH_PONGS  
+#ifdef WITH_SERIALOUT_MSGS  
   xSemaphoreTake(CONS_Mutex, portMAX_DELAY);
   Format_String(CONS_UART_Write, "TaskGPS:");
   Format_String(CONS_UART_Write, "\n");
@@ -1154,7 +1154,7 @@ void vTaskGPS(void* pvParameters)
         GPS_UART_Write('\n');
 #endif
       }
-#ifdef WITH_PONGS      
+#ifdef WITH_SERIALOUT_MSGS      
       if(xSemaphoreTake(CONS_Mutex, 10))
       { Format_String(CONS_UART_Write, "TaskGPS: ");
         Format_UnsDec(CONS_UART_Write, NewBaudRate);
