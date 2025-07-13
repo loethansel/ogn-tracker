@@ -527,7 +527,11 @@ void setup()
 #ifdef ARDUINO_USB_MODE
   Serial.setTxTimeoutMs(0);                  // to prevent delays and blocking of threads which send data to the USB console
 #endif
+#ifdef WITH_SERIALOUT_MSGS  
   Serial.begin(Parameters.CONbaud);          // USB Console: baud rate probably does not matter here
+#else
+  Serial.begin(4800);          // USB Console: force 4800Bit/s for f.u.n.k.e trt800 xpdr
+#endif
   GPS_UART_Init();
 
 #ifdef WITH_SERIALOUT_MSGS

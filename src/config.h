@@ -20,7 +20,7 @@
 
 // RAPA - Parameters
 #define FSB_DEFAULTS
-#define DMXIZ
+#define DMXIR
 #define x_acft  0x08
 #define x_verb  0x00
 #define x_rate  0x01
